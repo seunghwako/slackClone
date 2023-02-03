@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 declare const module: any;
@@ -6,6 +7,16 @@ declare const module: any;
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const port = process.env.PORT || 3008;
+
+  const config = new DocumentBuilder()
+    .setTitle('Slack Clone')
+    .setDescription('Slack 백엔드 Clone을 위한 API 문서')
+    .setVersion('1.0')
+    .addCookieAuth('connect.sid')
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('apiDocs', app, document);
+
   await app.listen(port);
   console.log(`listening on port ${port}`);
 
