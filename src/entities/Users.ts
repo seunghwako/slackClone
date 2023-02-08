@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 import {
   Column,
   CreateDateColumn,
@@ -32,21 +33,30 @@ export class Users {
   @ApiProperty({
     example: 'test@test.com',
     description: '사용자 이메일',
+    required: true,
   })
+  @IsEmail()
+  @IsNotEmpty()
   @Column('varchar', { name: 'email', unique: true, length: 30 })
   email: string;
 
   @ApiProperty({
     example: '파괴왕',
     description: '사용자 닉네임',
+    required: true,
   })
+  @IsString()
+  @IsNotEmpty()
   @Column('varchar', { name: 'nickname', length: 30 })
   nickname: string;
 
   @ApiProperty({
     example: 'test1234',
     description: '사용자 패스워드',
+    required: true,
   })
+  @IsString()
+  @IsNotEmpty()
   @Column('varchar', { name: 'password', length: 100, select: false })
   password: string;
 
