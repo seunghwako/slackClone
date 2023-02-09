@@ -5,10 +5,10 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Users } from 'src/entities/Users';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { InjectRepository } from '@nestjs/typeorm';
 @Injectable()
 export class UsersService {
   constructor(
