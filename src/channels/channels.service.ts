@@ -164,6 +164,11 @@ export class ChannelsService {
       })
       .where('channel.name = :name', { name })
       .getOne();
+
+    if (!channel) {
+      throw new NotFoundException('채널이 존재하지 않습니다.');
+    }
+
     const chats = new ChannelChats();
     chats.content = content;
     chats.UserId = myId;
@@ -176,7 +181,45 @@ export class ChannelsService {
     // socket.io로 워크스페이스 + 채널 사용자한테 전송
     this.eventsGateway.server
       // .of(`/ws-${url}`)
-      .to(`/ws-${url}-${chatWithUser.ChannelId}`)
-      .emit('message', chatWithUser);
+      .to(`/ws-${url}-${chatWithUser.ChannelId}`) // socket.io에서 room에 대응
+      .emit('message', chatWithUser); // message 내용 전달
+  }
+
+  // 이미지 업로드
+  async createWorkspaceChannelImages(
+    url: string,
+    name: string,
+    files: Express.Multer.File[],
+    myId: number,
+  ) {
+    console.log(files);
+    const channel = await this.channelsRepository
+      .createQueryBuilder('channel')
+      .innerJoin('channel.Workspace', 'workspace', 'workspace.url = :url', {
+        url,
+      })
+      .where('channel.name = :name', { name })
+      .getOne();
+
+    if (!channel) {
+      throw new NotFoundException('채널이 존재하지 않습니다.');
+    }
+
+    for (let i = 0; i < files.length; i++) {
+      // 트랜잭션 적용
+      const chats = new ChannelChats();
+      chats.content = files[i].path;
+      chats.UserId = myId;
+      chats.ChannelId = channel.id;
+      const savedChat = await this.channelChatsRepository.save(chats);
+      const chatWithUser = await this.channelChatsRepository.findOne({
+        where: { id: savedChat.id },
+        relations: ['User', 'Channel'],
+      });
+      this.eventsGateway.server
+        // .of(`/ws-${url}`)
+        .to(`/ws-${url}-${chatWithUser.ChannelId}`)
+        .emit('message', chatWithUser);
+    }
   }
 }
