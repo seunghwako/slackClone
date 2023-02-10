@@ -17,6 +17,7 @@ import { Users } from './entities/Users';
 import { WorkspaceMembers } from './entities/WorkspaceMembers';
 import { Workspaces } from './entities/Workspaces';
 import { AuthModule } from './auth/auth.module';
+import { EventsModule } from './events/events.module';
 
 // .env 파일을 외부(클라우드 or 외부 저장소 ,,,,,)에서 받아오는 경우
 // const getEnv = async () => {
@@ -55,6 +56,7 @@ import { AuthModule } from './auth/auth.module';
     WorkspacesModule,
     ChannelsModule,
     DmsModule,
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

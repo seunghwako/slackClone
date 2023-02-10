@@ -1,6 +1,6 @@
 import { ApiTags } from '@nestjs/swagger';
 /* eslint-disable @typescript-eslint/no-empty-function */
-import { Body, Controller, Delete, Get, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { User } from 'src/common/decorator/user.decorator';
 import { Users } from 'src/entities/Users';
 import { WorkspacesService } from './workspaces.service';
@@ -26,7 +26,9 @@ export class WorkspacesController {
   }
 
   @Get(':url/members')
-  getAllMembersFromWorkspace() {}
+  getAllMembersFromWorkspace(@Param('url') url: string) {
+    return this.workspacesService.getWorkspaceMembers(url);
+  }
 
   @Post(':url/members')
   inviteMembersToWorkspace() {}

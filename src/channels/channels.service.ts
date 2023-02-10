@@ -1,4 +1,3 @@
-import { LoggedInGuard } from './../auth/logged-in.guard';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ChannelChats } from 'src/entities/ChannelChats';
@@ -6,6 +5,7 @@ import { ChannelMembers } from 'src/entities/ChannelMembers';
 import { Channels } from 'src/entities/Channels';
 import { Users } from 'src/entities/Users';
 import { Workspaces } from 'src/entities/Workspaces';
+import { EventsGateway } from 'src/events/events.gateway';
 import { MoreThan, Repository } from 'typeorm';
 
 @Injectable()
@@ -20,6 +20,7 @@ export class ChannelsService {
     @InjectRepository(ChannelMembers)
     private channelMembersRepository: Repository<ChannelMembers>,
     @InjectRepository(Users) private usersRepository: Repository<Users>,
+    private eventsGateway: EventsGateway,
   ) {}
 
   async findById(id: number) {
@@ -131,7 +132,7 @@ export class ChannelsService {
   }
 
   // 채널에서 읽지 않은 메시지 갯수 보여주는 API
-  async getChannelUnreadsCount(url: string, name: string, after: string) {
+  async getChannelUnreadsCount(url: string, name: string, after: number) {
     const channel = await this.channelsRepository
       .createQueryBuilder('channel')
       .innerJoin('channel.Workspace', 'workspace', 'workspace.url = :url', {
@@ -147,5 +148,35 @@ export class ChannelsService {
         createdAt: MoreThan(new Date(after)), // ex) createAt > "2023-02-10"
       },
     });
+  }
+
+  // 채팅
+  async createWorkspaceChannelChats(
+    url: string,
+    name: string,
+    content: string,
+    myId: number,
+  ) {
+    const channel = await this.channelsRepository
+      .createQueryBuilder('channel')
+      .innerJoin('channel.Workspace', 'workspace', 'workspace.url = :url', {
+        url,
+      })
+      .where('channel.name = :name', { name })
+      .getOne();
+    const chats = new ChannelChats();
+    chats.content = content;
+    chats.UserId = myId;
+    chats.ChannelId = channel.id;
+    const savedChat = await this.channelChatsRepository.save(chats);
+    const chatWithUser = await this.channelChatsRepository.findOne({
+      where: { id: savedChat.id },
+      relations: ['User', 'Channel'],
+    });
+    // socket.io로 워크스페이스 + 채널 사용자한테 전송
+    this.eventsGateway.server
+      // .of(`/ws-${url}`)
+      .to(`/ws-${url}-${chatWithUser.ChannelId}`)
+      .emit('message', chatWithUser);
   }
 }

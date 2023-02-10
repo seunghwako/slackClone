@@ -2,7 +2,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { HttpExceptionFilter } from './httpException.filter';
+import { HttpExceptionFilter } from './http-exception.filter';
 import * as passport from 'passport';
 import * as session from 'express-session';
 
