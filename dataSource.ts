@@ -9,7 +9,8 @@ import { Users } from './src/entities/Users';
 import { WorkspaceMembers } from './src/entities/WorkspaceMembers';
 import { Workspaces } from './src/entities/Workspaces';
 
-dotenv.config();
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+require('dotenv').config();
 
 const dataSource = new DataSource({
   type: 'mysql',
