@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { Users } from 'src/entities/Users';
+import { Users } from '../entities/Users';
 import { DataSource, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { WorkspaceMembers } from 'src/entities/WorkspaceMembers';
-import { ChannelMembers } from 'src/entities/ChannelMembers';
+import { WorkspaceMembers } from '../entities/WorkspaceMembers';
+import { ChannelMembers } from '../entities/ChannelMembers';
 @Injectable()
 export class UsersService {
   constructor(
@@ -18,6 +18,14 @@ export class UsersService {
     private channelMembersRepository: Repository<ChannelMembers>,
     private dataSource: DataSource,
   ) {}
+
+  async findByEmail(email: string) {
+    return this.usersRepository.findOne({
+      where: { email },
+      select: ['id', 'email', 'password'],
+    });
+  }
+
   async join(email: string, nickname: string, password: string) {
     // 트랜잭션을 위한 queryRunner
     const queryRunner = this.dataSource.createQueryRunner();

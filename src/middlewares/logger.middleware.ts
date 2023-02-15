@@ -23,6 +23,7 @@ export class LoggerMiddleware implements NestMiddleware {
 }
 
 // middleware 자체는 router 즉, controller보다 먼저 실행됨
+// 실행순서
 // line 9-10 -> request에 대한 기록을 하고 나서
 // line 21 -> router로 이동
 // line 13-19 -> router가 finish된 후 실행

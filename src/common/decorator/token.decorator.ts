@@ -6,3 +6,4 @@ export const Token = createParamDecorator(
     return response.locals.jwt;
   },
 );
+// token 사용한다면 @Token() token 형식으로 사용 가능

@@ -11,6 +11,7 @@ import { ChannelMembers } from 'src/entities/ChannelMembers';
     TypeOrmModule.forFeature([Users, WorkspaceMembers, ChannelMembers]),
   ], // TypeOrm Repository Dependency Injection을 위해 필요
   providers: [UsersService],
+  exports: [UsersService],
   controllers: [UsersController],
 })
 export class UsersModule {}
