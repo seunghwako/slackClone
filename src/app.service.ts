@@ -8,7 +8,7 @@ import { Injectable } from '@nestjs/common';
 // Injectable -> DI(Dependency Injection): 의존성 주입
 @Injectable()
 export class AppService {
-  constructor(private configService: ConfigService) {}
+  constructor(private readonly configService: ConfigService) {}
   getHello(): string {
     return this.configService.get('PORT');
   }

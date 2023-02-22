@@ -72,6 +72,6 @@ import { EventsModule } from './events/events.module';
 //implement -> 사용시 아래 코드를 반드시 구현해야하는 강제성이 생김 / 없어도 오류는 나지 않지만, 만약 오타를 작성했을 때 implements를 사용하지 않는다면 에러를 확인하기 어렵지만 implements를 사용하여 강제성이 생김으로써 좀 더 에러를 찾는데 수월함 ( 타입 검사도 용이 )
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): any {
-    consumer.apply(LoggerMiddleware).forRoutes('*');
+    consumer.apply(LoggerMiddleware).forRoutes('*'); // forRoutes(컨트롤러)나 forRoutes(주소)로 특정 주소에만 미들웨어 적용 가능
   }
 }

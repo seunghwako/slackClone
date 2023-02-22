@@ -5,7 +5,7 @@ import { Channels } from 'src/entities/Channels';
 import { Users } from 'src/entities/Users';
 import { WorkspaceMembers } from 'src/entities/WorkspaceMembers';
 import { Workspaces } from 'src/entities/Workspaces';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 @Injectable()
 export class WorkspacesService {
@@ -19,6 +19,7 @@ export class WorkspacesService {
     @InjectRepository(ChannelMembers)
     private channelMembersRepository: Repository<ChannelMembers>,
     @InjectRepository(Users) private usersRepository: Repository<Users>,
+    private dataSource: DataSource,
   ) {}
 
   async findById(id: number) {
@@ -32,27 +33,43 @@ export class WorkspacesService {
   }
 
   async createWorkspace(name: string, url: string, myId: number) {
-    // transaction 적용해야 함
-    const workspace = new Workspaces();
-    workspace.name = name;
-    workspace.url = url;
-    workspace.OwnerId = myId;
-    const returned = await this.workspacesRepository.save(workspace);
+    const queryRunner = this.dataSource.createQueryRunner();
+    queryRunner.connect();
+    queryRunner.startTransaction();
 
-    const workspaceMember = new WorkspaceMembers();
-    workspaceMember.UserId = myId;
-    workspaceMember.WorkspaceId = returned.id;
-    await this.workspaceMembersRepository.save(workspaceMember);
+    try {
+      const returned = await queryRunner.manager
+        .getRepository(Workspaces)
+        .save({
+          name: name,
+          url: url,
+          OwnerId: myId,
+        });
 
-    const channel = new Channels();
-    channel.name = '일반';
-    channel.WorkspaceId = returned.id;
-    const channelReturned = await this.channelsRepository.save(channel);
+      await queryRunner.manager.getRepository(WorkspaceMembers).save({
+        UserId: myId,
+        WorkspaceId: returned.id,
+      });
 
-    const channelMember = new ChannelMembers();
-    channelMember.UserId = myId;
-    channelMember.ChannelId = channelReturned.id;
-    await this.channelMembersRepository.save(channelMember);
+      const channelReturned = await queryRunner.manager
+        .getRepository(Channels)
+        .save({
+          name: '일반',
+          WorkspaceId: returned.id,
+        });
+
+      await queryRunner.manager.getRepository(ChannelMembers).save({
+        UserId: myId,
+        ChannelId: channelReturned.id,
+      });
+
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      console.log('error', error);
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async getWorkspaceMembers(url: string) {
@@ -87,36 +104,60 @@ export class WorkspacesService {
   }
 
   async createWorkspaceMembers(url, email) {
-    const workspace = await this.workspacesRepository.findOne({
-      where: { url },
-      // relations: ['Channels'] 이렇게도 쓸 수 있음
-      join: {
-        alias: 'workspace',
-        innerJoinAndSelect: {
-          channels: 'workspace.Channels',
+    const queryRunner = this.dataSource.createQueryRunner();
+    queryRunner.connect();
+    queryRunner.startTransaction();
+    // const workspace = await this.workspacesRepository.findOne({
+    //   where: { url },
+    //   // relations: ['Channels'] 이렇게도 쓸 수 있음
+    //   join: {
+    //     alias: 'workspace',
+    //     innerJoinAndSelect: {
+    //       channels: 'workspace.Channels',
+    //     },
+    //   },
+    // });
+    const workspace = await queryRunner.manager
+      .getRepository(Workspaces)
+      .findOne({
+        where: { url },
+        join: {
+          alias: 'workspace',
+          innerJoinAndSelect: {
+            channels: 'workspace.Channels',
+          },
         },
-      },
-    });
+      });
     // query빌더로는 이렇게 쓸 수 있음
     // this.workspacesRepository.createQueryBuilder('workspace').innerJoinAndSelect('workspace.Channels', 'channels').getOne()
 
-    const user = await this.usersRepository.findOne({ where: { email } });
+    const user = await queryRunner.manager
+      .getRepository(Users)
+      .findOne({ where: { email } });
+
     if (!user) {
       return null;
     }
 
-    //트랜잭션 적용해야 함
-    const workspaceMember = new WorkspaceMembers();
-    workspaceMember.WorkspaceId = workspace.id;
-    workspaceMember.UserId = user.id;
-    await this.workspaceMembersRepository.save(workspaceMember);
+    try {
+      await queryRunner.manager.getRepository(WorkspaceMembers).save({
+        WorkspaceId: workspace.id,
+        UserID: user.id,
+      });
 
-    const channelMember = new ChannelMembers();
-    channelMember.ChannelId = workspace.Channels.find(
-      (v) => v.name === '일반',
-    ).id;
-    channelMember.UserId = user.id;
-    await this.channelMembersRepository.save(channelMember);
+      await queryRunner.manager.getRepository(ChannelMembers).save({
+        ChannelId: workspace.Channels.find((v) => v.name === '일반').id,
+        UserId: user.id,
+      });
+
+      await queryRunner.commitTransaction();
+      return true;
+    } catch (error) {
+      console.log('error', error);
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async getWorkspaceMember(url: string, id: number) {
