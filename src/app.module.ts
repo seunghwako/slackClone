@@ -7,7 +7,7 @@ import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { UsersModule } from './users/users.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
 import { ChannelsModule } from './channels/channels.module';
-import { DmsModule } from './dms/dms.module';
+import { DMsModule } from './dms/dms.module';
 import { ChannelChats } from './entities/ChannelChats';
 import { ChannelMembers } from './entities/ChannelMembers';
 import { Channels } from './entities/Channels';
@@ -55,7 +55,7 @@ import { EventsModule } from './events/events.module';
     UsersModule,
     WorkspacesModule,
     ChannelsModule,
-    DmsModule,
+    DMsModule,
     EventsModule,
   ],
   controllers: [AppController],
