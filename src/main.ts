@@ -7,6 +7,7 @@ import * as passport from 'passport';
 import * as session from 'express-session';
 import * as path from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import * as expressBasicAuth from 'express-basic-auth';
 
 declare const module: any;
 
@@ -35,6 +36,17 @@ async function bootstrap() {
     {
       prefix: '/dist',
     },
+  );
+
+  // SWAGGER 보안을 위함
+  app.use(
+    ['/apiDocs', '/apiDocs-json'],
+    expressBasicAuth({
+      challenge: true,
+      users: {
+        [process.env.SWAGGER_USER]: process.env.SWAGGER_PASSWORD,
+      },
+    }),
   );
 
   const config = new DocumentBuilder()
